@@ -1,14 +1,14 @@
-require('dotenv').config();
-const { exec } = require('child_process');
-
+import 'dotenv/config';
+import { logger } from './logger.js';
+import { exec } from 'child_process';
+import fs from 'fs';
+import { google } from 'googleapis';
 const {
   GDRIVE_BACKUP_FOLDER_ID,
   DB_NAMES,
   SERVICE_ACCOUNT_FILE,
   REMOVE_OLD_FILES_LOCALY
 } = process.env;
-const fs = require('fs');
-const { google } = require('googleapis');
 const filesNames = [];
 const client = new google.auth.GoogleAuth({
   keyFile: SERVICE_ACCOUNT_FILE,
@@ -21,14 +21,17 @@ const drive = google.drive({
 });
 
 const dbNames = DB_NAMES.split(',');
-const fromatedDate = (() => {
+const formatedDate = (() => {
   const date = new Date().toLocaleDateString('fr').replace(/\//g, '-');
   const hour = new Date()
     .toLocaleString('fr', { timeStyle: 'short' })
     .replace(':', '-');
   return date + '-' + hour;
 })();
-const deletedRegExp = new RegExp(`^(?!.*${fromatedDate}).*\\.gz.*$`);
+
+const deletedRegExp = new RegExp(
+  `^(?!.*${formatedDate})(?=.*${dbNames.join('|.*')}).*\\.gz.*$`
+);
 
 const uploadFile = async (fileName) => {
   try {
@@ -44,16 +47,16 @@ const uploadFile = async (fileName) => {
       media: media
     });
 
-    console.log('File uploaded successfully. File ID:', response.data.id);
+    logger.info('File uploaded successfully. File ID:', response.data.id);
   } catch (err) {
-    console.error('Error uploading file:', err);
+    logger.error('Error uploading file:', err);
   }
 };
 
 function delete_old_backup_files() {
   fs.readdir(__dirname, (err, files) => {
     if (err) {
-      console.error(err);
+      logger.error(err);
       return;
     }
 
@@ -62,10 +65,10 @@ function delete_old_backup_files() {
         const filePath = `${__dirname}/${file}`;
         fs.unlink(filePath, (err) => {
           if (err) {
-            console.error(err);
+            logger.error(err);
             return;
           }
-          console.log(`Deleted file: ${filePath}`);
+          logger.info(`Deleted file: ${filePath}`);
         });
       }
     });
@@ -74,16 +77,16 @@ function delete_old_backup_files() {
 
 async function processFiles() {
   const promises = dbNames.map(async (name) => {
-    const fileName = name + '-' + fromatedDate + '.gz';
+    const fileName = name + '-' + formatedDate + '.gz';
     filesNames.push(fileName);
 
     await new Promise((resolve, reject) => {
       exec(
         `mongodump --archive=${fileName} --gzip --db=${name}`,
-        { maxBuffer: 1024 * 1000000 },
-        (e, re) => {
+        { maxBuffer: 1024 * 10000 },
+        (e) => {
           if (e) {
-            console.log('mongodump error- ', e);
+            logger.error('mongodump error- ', e);
             reject(e);
           } else {
             resolve();

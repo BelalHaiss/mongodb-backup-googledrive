@@ -2,6 +2,7 @@
   "name": "backup",
   "version": "1.0.0",
   "description": "cron job to backup vps data",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.3.1",
-    "googleapis": "^123.0.0"
+    "googleapis": "^123.0.0",
+    "winston": "^3.10.0"
   }
 }

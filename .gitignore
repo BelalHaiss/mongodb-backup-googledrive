@@ -1,4 +1,4 @@
 node_modules
 *.gz
-controller-backup.json
+credentials.json
 .env
