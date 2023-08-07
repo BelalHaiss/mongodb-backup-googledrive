@@ -2,6 +2,11 @@ import 'dotenv/config';
 import { logger } from './logger.js';
 import { exec } from 'child_process';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 import { google } from 'googleapis';
 const {
   GDRIVE_BACKUP_FOLDER_ID,
